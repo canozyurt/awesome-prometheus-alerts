@@ -8,7 +8,7 @@ groups:
       expr: 'node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10'
       for: 2m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Host out of memory (instance {{ $labels.instance }})
         description: "Node memory is filling up (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -21,15 +21,6 @@ groups:
       annotations:
         summary: Host memory under memory pressure (instance {{ $labels.instance }})
         description: "The node is under heavy memory pressure. High rate of major page faults\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-
-    - alert: HostMemoryIsUnderUtilized
-      expr: '100 - (rate(node_memory_MemAvailable_bytes[30m]) / node_memory_MemTotal_bytes * 100) < 20'
-      for: 1w
-      labels:
-        severity: info
-      annotations:
-        summary: Host Memory is under utilized (instance {{ $labels.instance }})
-        description: "Node memory is < 20% for 1 week. Consider reducing memory space.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
     - alert: HostUnusualNetworkThroughputIn
       expr: 'sum by (instance) (rate(node_network_receive_bytes_total[2m])) / 1024 / 1024 > 100'
@@ -71,7 +62,7 @@ groups:
       expr: '(node_filesystem_avail_bytes * 100) / node_filesystem_size_bytes < 10 and ON (instance, device, mountpoint) node_filesystem_readonly == 0'
       for: 2m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Host out of disk space (instance {{ $labels.instance }})
         description: "Disk is almost full (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -89,7 +80,7 @@ groups:
       expr: 'node_filesystem_files_free / node_filesystem_files * 100 < 10 and ON (instance, device, mountpoint) node_filesystem_readonly == 0'
       for: 2m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Host out of inodes (instance {{ $labels.instance }})
         description: "Disk is almost running out of available inodes (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -129,15 +120,6 @@ groups:
       annotations:
         summary: Host high CPU load (instance {{ $labels.instance }})
         description: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-
-    - alert: HostCpuIsUnderUtilized
-      expr: '100 - (rate(node_cpu_seconds_total{mode="idle"}[30m]) * 100) < 20'
-      for: 1w
-      labels:
-        severity: info
-      annotations:
-        summary: Host CPU is under utilized (instance {{ $labels.instance }})
-        description: "CPU load is < 20% for 1 week. Consider reducing the number of CPUs.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
     - alert: HostCpuStealNoisyNeighbor
       expr: 'avg by(instance) (rate(node_cpu_seconds_total{mode="steal"}[5m])) * 100 > 10'
@@ -179,7 +161,7 @@ groups:
       expr: 'node_systemd_unit_state{state="failed"} == 1'
       for: 0m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Host systemd service crashed (instance {{ $labels.instance }})
         description: "systemd service crashed\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -215,7 +197,7 @@ groups:
       expr: 'node_md_disks{state="failed"} > 0'
       for: 2m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Host RAID disk failure (instance {{ $labels.instance }})
         description: "At least one device in RAID array on {{ $labels.instance }} failed. Array {{ $labels.md_device }} needs attention and possibly a disk swap\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -224,7 +206,7 @@ groups:
       expr: 'count(sum(label_replace(node_uname_info, "kernel", "$1", "release", "([0-9]+.[0-9]+.[0-9]+).*")) by (kernel)) > 1'
       for: 6h
       labels:
-        severity: warning
+        severity: info
       annotations:
         summary: Host kernel version deviations (instance {{ $labels.instance }})
         description: "Different kernel versions are running\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -233,7 +215,7 @@ groups:
       expr: 'increase(node_vmstat_oom_kill[1m]) > 0'
       for: 0m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Host OOM kill detected (instance {{ $labels.instance }})
         description: "OOM kill detected\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -242,7 +224,7 @@ groups:
       expr: 'increase(node_edac_correctable_errors_total[1m]) > 0'
       for: 0m
       labels:
-        severity: info
+        severity: warning
       annotations:
         summary: Host EDAC Correctable Errors detected (instance {{ $labels.instance }})
         description: "Host {{ $labels.instance }} has had {{ printf \"%.0f\" $value }} correctable memory errors reported by EDAC in the last 5 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -251,7 +233,7 @@ groups:
       expr: 'node_edac_uncorrectable_errors_total > 0'
       for: 0m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Host EDAC Uncorrectable Errors detected (instance {{ $labels.instance }})
         description: "Host {{ $labels.instance }} has had {{ printf \"%.0f\" $value }} uncorrectable memory errors reported by EDAC in the last 5 minutes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -287,7 +269,7 @@ groups:
       expr: '(node_bonding_active - node_bonding_slaves) != 0'
       for: 2m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Host Network Bond Degraded (instance {{ $labels.instance }})
         description: "Bond \"{{ $labels.device }}\" degraded on \"{{ $labels.instance }}\".\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -318,12 +300,3 @@ groups:
       annotations:
         summary: Host clock not synchronising (instance {{ $labels.instance }})
         description: "Clock not synchronising. Ensure NTP is configured on this host.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-
-    - alert: HostRequiresReboot
-      expr: 'node_reboot_required > 0'
-      for: 4h
-      labels:
-        severity: info
-      annotations:
-        summary: Host requires reboot (instance {{ $labels.instance }})
-        description: "{{ $labels.instance }} requires a reboot.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

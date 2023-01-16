@@ -22,11 +22,12 @@ groups:
         summary: Ceph monitor clock skew (instance {{ $labels.instance }})
         description: "Ceph monitor clock skew detected. Please check ntp and hardware clock settings\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
+##### We don't know how many of the total of monitors throw this warning, so in this ambuigity this should be treated as critical.
     - alert: CephMonitorLowSpace
       expr: 'ceph_monitor_avail_percent < 10'
       for: 2m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Ceph monitor low space (instance {{ $labels.instance }})
         description: "Ceph monitor storage is low.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -53,19 +54,10 @@ groups:
       expr: 'ceph_osd_utilization > 90'
       for: 2m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Ceph OSD low space (instance {{ $labels.instance }})
         description: "Ceph Object Storage Daemon is going out of space. Please add more disks.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-
-    - alert: CephOsdReweighted
-      expr: 'ceph_osd_weight < 1'
-      for: 2m
-      labels:
-        severity: warning
-      annotations:
-        summary: Ceph OSD reweighted (instance {{ $labels.instance }})
-        description: "Ceph Object Storage Daemon takes too much time to resize.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
     - alert: CephPgDown
       expr: 'ceph_pg_down > 0'
@@ -89,7 +81,7 @@ groups:
       expr: 'ceph_pg_inconsistent > 0'
       for: 0m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Ceph PG inconsistent (instance {{ $labels.instance }})
         description: "Some Ceph placement groups are inconsistent. Data is available but inconsistent across nodes.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -98,7 +90,7 @@ groups:
       expr: 'ceph_pg_activating > 0'
       for: 2m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Ceph PG activation long (instance {{ $labels.instance }})
         description: "Some Ceph placement groups are too long to activate.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -107,7 +99,7 @@ groups:
       expr: 'ceph_pg_backfill_toofull > 0'
       for: 2m
       labels:
-        severity: warning
+        severity: critical
       annotations:
         summary: Ceph PG backfill full (instance {{ $labels.instance }})
         description: "Some Ceph placement groups are located on full Object Storage Daemon on cluster. Those PGs can be unavailable shortly. Please check OSDs, change weight or reconfigure CRUSH rules.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
